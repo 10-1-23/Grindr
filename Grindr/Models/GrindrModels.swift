@@ -16,6 +16,7 @@ struct Profile: Identifiable, Codable, Hashable {
     var isOnline: Bool?
     var lastActive: Int64?
     var mediaHash: String?
+    var customImageURL: String?
     var photos: [ProfilePhoto]?
     var tags: [String]?
     var ethnicity: String?
@@ -38,6 +39,7 @@ struct Profile: Identifiable, Codable, Hashable {
         case isOnline
         case lastActive
         case mediaHash
+        case customImageURL
         case photos
         case tags
         case ethnicity
@@ -63,6 +65,9 @@ struct Profile: Identifiable, Codable, Hashable {
     }
     
     var avatarURL: URL? {
+        if let custom = customImageURL, let u = URL(string: custom) {
+            return u
+        }
         guard let hash = mediaHash, !hash.isEmpty else { return nil }
         return URL(string: "https://cdns.grindr.com/images/profile/1024x1024/\(hash)")
     }
@@ -71,17 +76,23 @@ struct Profile: Identifiable, Codable, Hashable {
 // MARK: - Profile Photo
 struct ProfilePhoto: Identifiable, Codable, Hashable {
     let id: String
-    let mediaHash: String
+    let mediaHash: String?
+    var customURL: String?
     var caption: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "mediaId"
         case mediaHash
+        case customURL
         case caption
     }
     
     var url: URL? {
-        URL(string: "https://cdns.grindr.com/images/profile/1024x1024/\(mediaHash)")
+        if let custom = customURL, let u = URL(string: custom) {
+            return u
+        }
+        guard let hash = mediaHash, !hash.isEmpty else { return nil }
+        return URL(string: "https://cdns.grindr.com/images/profile/1024x1024/\(hash)")
     }
 }
 
@@ -177,12 +188,16 @@ struct ChatConversation: Identifiable, Codable, Hashable {
     let participantId: String
     var participantName: String?
     var participantMediaHash: String?
+    var participantCustomURL: String?
     var lastMessageSnippet: String?
     var lastMessageTimestamp: Int64?
     var unreadCount: Int = 0
     var isMuted: Bool = false
     
     var avatarURL: URL? {
+        if let custom = participantCustomURL, let u = URL(string: custom) {
+            return u
+        }
         guard let hash = participantMediaHash, !hash.isEmpty else { return nil }
         return URL(string: "https://cdns.grindr.com/images/profile/1024x1024/\(hash)")
     }
@@ -206,17 +221,23 @@ struct GrindrAlbum: Identifiable, Codable, Hashable {
 
 struct AlbumContentItem: Identifiable, Codable, Hashable {
     let id: Int64
-    let mediaHash: String
+    let mediaHash: String?
+    var customURL: String?
     var caption: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "mediaId"
         case mediaHash
+        case customURL
         case caption
     }
     
     var url: URL? {
-        URL(string: "https://cdns.grindr.com/images/profile/1024x1024/\(mediaHash)")
+        if let custom = customURL, let u = URL(string: custom) {
+            return u
+        }
+        guard let hash = mediaHash, !hash.isEmpty else { return nil }
+        return URL(string: "https://cdns.grindr.com/images/profile/1024x1024/\(hash)")
     }
 }
 

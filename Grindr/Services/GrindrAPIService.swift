@@ -39,18 +39,15 @@ final class GrindrAPIService: ObservableObject {
         self.isAuthenticated = !self.authToken.isEmpty
     }
     
-    // Generate new fake device identity
     func regenerateDeviceId() {
         self.deviceId = UUID().uuidString.lowercased()
     }
     
-    // MARK: - Standard Headers
     private func buildRequest(for endpoint: String, method: String = "GET", body: Data? = nil) -> URLRequest {
         let url = baseURL.appendingPathComponent(endpoint)
         var request = URLRequest(url: url)
         request.httpMethod = method
         
-        // Spoof standard iOS Grindr headers
         request.setValue(authToken, forHTTPHeaderField: "L-Auth-Token")
         request.setValue(deviceId, forHTTPHeaderField: "L-Device-Id")
         request.setValue("Grindr/24.12.0 (iPhone; iOS 17.5; Scale/3.00)", forHTTPHeaderField: "User-Agent")
@@ -93,7 +90,6 @@ final class GrindrAPIService: ObservableObject {
             return entries.compactMap { $0.profile }
         }
         
-        // Fallback: direct array decode
         if let directProfiles = try? decoder.decode([Profile].self, from: data) {
             return directProfiles
         }
@@ -149,10 +145,10 @@ final class GrindrAPIService: ObservableObject {
     func fetchSharedAlbums() async throws -> [GrindrAlbum] {
         if isOfflineDemoMode || authToken.isEmpty {
             return [
-                GrindrAlbum(id: 101, title: "Vault 01", photos: [
-                    AlbumContentItem(id: 1, mediaHash: "sample_hash_1", caption: "At the gym"),
-                    AlbumContentItem(id: 2, mediaHash: "sample_hash_2", caption: "DC Skyline")
-                ], ownerProfileId: "user_02", isSharedWithMe: true)
+                GrindrAlbum(id: 101, title: "DC Nights & Gym", photos: [
+                    AlbumContentItem(id: 1, mediaHash: nil, customURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800", caption: "At the gym"),
+                    AlbumContentItem(id: 2, mediaHash: nil, customURL: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800", caption: "DC Skyline")
+                ], ownerProfileId: "1002", isSharedWithMe: true)
             ]
         }
         
@@ -165,7 +161,7 @@ final class GrindrAPIService: ObservableObject {
         return (try? JSONDecoder().decode([GrindrAlbum].self, from: data)) ?? []
     }
     
-    // MARK: - Mock Demo Generator (Instant UI testing without live login)
+    // MARK: - High-Resolution Demo Profiles with Images
     private func generateMockProfiles(latitude: Double, longitude: Double) -> [Profile] {
         [
             Profile(
@@ -177,7 +173,11 @@ final class GrindrAPIService: ObservableObject {
                 isOnline: true,
                 lastActive: Date().millisecondsSince1970,
                 mediaHash: nil,
-                photos: [],
+                customImageURL: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800",
+                photos: [
+                    ProfilePhoto(id: "p1", mediaHash: nil, customURL: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800", caption: "DC rooftop"),
+                    ProfilePhoto(id: "p2", mediaHash: nil, customURL: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800", caption: "Weekend vibes")
+                ],
                 tags: ["Tech", "Fitness", "Coffee", "Gamer"],
                 ethnicity: "Mixed",
                 relationshipStatus: "Single",
@@ -198,7 +198,11 @@ final class GrindrAPIService: ObservableObject {
                 isOnline: true,
                 lastActive: Date().millisecondsSince1970 - 60000,
                 mediaHash: nil,
-                photos: [],
+                customImageURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
+                photos: [
+                    ProfilePhoto(id: "p3", mediaHash: nil, customURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800", caption: "Studio work"),
+                    ProfilePhoto(id: "p4", mediaHash: nil, customURL: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=800", caption: "Hiking")
+                ],
                 tags: ["Design", "Art", "Travel"],
                 ethnicity: "Black",
                 relationshipStatus: "Single",
@@ -219,7 +223,10 @@ final class GrindrAPIService: ObservableObject {
                 isOnline: false,
                 lastActive: Date().millisecondsSince1970 - 3600000,
                 mediaHash: nil,
-                photos: [],
+                customImageURL: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800",
+                photos: [
+                    ProfilePhoto(id: "p5", mediaHash: nil, customURL: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800", caption: "Lab life")
+                ],
                 tags: ["Science", "Running", "Music"],
                 ethnicity: "Latino",
                 relationshipStatus: "Dating",
@@ -240,7 +247,10 @@ final class GrindrAPIService: ObservableObject {
                 isOnline: true,
                 lastActive: Date().millisecondsSince1970,
                 mediaHash: nil,
-                photos: [],
+                customImageURL: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800",
+                photos: [
+                    ProfilePhoto(id: "p6", mediaHash: nil, customURL: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800", caption: "Desk setup")
+                ],
                 tags: ["Infosec", "Crypto", "Tattoos"],
                 ethnicity: "White",
                 relationshipStatus: "Single",
@@ -251,6 +261,50 @@ final class GrindrAPIService: ObservableObject {
                 lookingFor: ["Right Now", "Chat"],
                 pronouns: "He/Him",
                 meetAt: ["Anywhere"]
+            ),
+            Profile(
+                id: "1005",
+                displayName: "Kai",
+                aboutMe: "Photographer & creative director. Looking for interesting people.",
+                age: 25,
+                distance: 4200.0,
+                isOnline: true,
+                lastActive: Date().millisecondsSince1970,
+                mediaHash: nil,
+                customImageURL: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=800",
+                photos: [],
+                tags: ["Photo", "Nightlife", "Travel"],
+                ethnicity: "Asian",
+                relationshipStatus: "Single",
+                bodyType: "Fit",
+                height: 177,
+                weight: 72,
+                position: "Vers",
+                lookingFor: ["Dates", "Right Now"],
+                pronouns: "He/Him",
+                meetAt: ["Bar"]
+            ),
+            Profile(
+                id: "1006",
+                displayName: "Tyler M",
+                aboutMe: "Personal trainer. Up early, lifting heavy. Let's grab a smoothie.",
+                age: 29,
+                distance: 5800.0,
+                isOnline: false,
+                lastActive: Date().millisecondsSince1970 - 7200000,
+                mediaHash: nil,
+                customImageURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800",
+                photos: [],
+                tags: ["Gym", "Nutrition", "Outdoors"],
+                ethnicity: "White",
+                relationshipStatus: "Single",
+                bodyType: "Muscular",
+                height: 185,
+                weight: 90,
+                position: "Top",
+                lookingFor: ["Workout Partner", "Dates"],
+                pronouns: "He/Him",
+                meetAt: ["Gym"]
             )
         ]
     }
@@ -262,6 +316,7 @@ final class GrindrAPIService: ObservableObject {
                 participantId: "1001",
                 participantName: "Alex / Dev",
                 participantMediaHash: nil,
+                participantCustomURL: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800",
                 lastMessageSnippet: "Sent you an expiring photo 📸",
                 lastMessageTimestamp: Date().millisecondsSince1970 - 120000,
                 unreadCount: 1
@@ -271,6 +326,7 @@ final class GrindrAPIService: ObservableObject {
                 participantId: "1002",
                 participantName: "Marcus",
                 participantMediaHash: nil,
+                participantCustomURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
                 lastMessageSnippet: "Tapped you 🔥",
                 lastMessageTimestamp: Date().millisecondsSince1970 - 1800000,
                 unreadCount: 0
