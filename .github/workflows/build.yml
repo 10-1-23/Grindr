@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-ipa:
     name: Compile & Package GrindrX IPA
@@ -16,8 +19,6 @@ jobs:
 
       - name: Select Xcode 16 (Required for Format 77)
         run: |
-          echo "Available Xcode installations:"
-          ls -d /Applications/Xcode*.app || true
           for app in /Applications/Xcode_16*.app /Applications/Xcode.app; do
             if [ -d "$app" ]; then
               echo "Selecting $app"
