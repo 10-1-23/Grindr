@@ -285,6 +285,56 @@ struct SettingsView: View {
                 .background(Theme.accent)
                 .cornerRadius(6)
             }
+            
+            HStack(spacing: 8) {
+                Button(action: {
+                    if let clip = UIPasteboard.general.string, !clip.isEmpty {
+                        inputToken = clip.trimmingCharacters(in: .whitespacesAndNewlines)
+                        apiService.authToken = inputToken
+                        showToast("Pasted & saved token from clipboard!")
+                    } else {
+                        showToast("Clipboard is empty!")
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "doc.on.clipboard")
+                        Text("PASTE CLIPBOARD")
+                    }
+                    .font(Theme.fontMono)
+                    .foregroundColor(Theme.textPrimary)
+                    .frame(maxWidth: .infinity)
+                    .padding(8)
+                    .background(Theme.surfaceElevated)
+                    .cornerRadius(4)
+                }
+                
+                Button(action: {
+                    Task {
+                        do {
+                            let ok = try await apiService.syncSessionFromDokk()
+                            if ok {
+                                inputToken = apiService.authToken
+                                showToast("Synced live session from Dokk Proxy!")
+                            } else {
+                                showToast("No session found on Dokk proxy yet.")
+                            }
+                        } catch {
+                            showToast("Could not reach Dokk proxy :8080")
+                        }
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("AUTO-SYNC PROXY")
+                    }
+                    .font(Theme.fontMono)
+                    .foregroundColor(Theme.background)
+                    .frame(maxWidth: .infinity)
+                    .padding(8)
+                    .background(Theme.accentSecondary)
+                    .cornerRadius(4)
+                }
+            }
         }
         .padding()
         .background(Theme.surface)

@@ -161,6 +161,65 @@ final class GrindrAPIService: ObservableObject {
         return (try? JSONDecoder().decode([GrindrAlbum].self, from: data)) ?? []
     }
     
+    // MARK: - Current User Profile (Me)
+    func fetchMyProfile() async throws -> Profile {
+        if isOfflineDemoMode || authToken.isEmpty {
+            return generateMockProfiles(latitude: 38.8951, longitude: -77.0364)[0]
+        }
+        
+        let req = buildRequest(for: "v4/me/profile")
+        let (data, response) = try await session.data(for: req)
+        guard let httpResp = response as? HTTPURLResponse, (200...299).contains(httpResp.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        return try JSONDecoder().decode(Profile.self, from: data)
+    }
+
+    // MARK: - Direct Chat Messaging
+    func sendMessage(recipientId: String, body: String) async throws -> Bool {
+        if isOfflineDemoMode || authToken.isEmpty {
+            return true
+        }
+        
+        let payload: [String: Any] = [
+            "recipientId": recipientId,
+            "body": body,
+            "type": "text"
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        let req = buildRequest(for: "v4/chat/messages", method: "POST", body: data)
+        let (_, response) = try await session.data(for: req)
+        guard let httpResp = response as? HTTPURLResponse else { return false }
+        return (200...299).contains(httpResp.statusCode)
+    }
+
+    // MARK: - Sync Session from Local Dokk Proxy
+    func syncSessionFromDokk(host: String = "192.168.1.243", port: Int = 8080) async throws -> Bool {
+        guard let url = URL(string: "http://\(host):\(port)/api/grindrx/session") else { return false }
+        let (data, response) = try await session.data(from: url)
+        guard let httpResp = response as? HTTPURLResponse, httpResp.statusCode == 200 else { return false }
+        
+        struct DokkSessionResponse: Codable {
+            let success: Bool
+            let session: SessionData?
+            struct SessionData: Codable {
+                let authToken: String
+                let deviceId: String
+            }
+        }
+        
+        if let decoded = try? JSONDecoder().decode(DokkSessionResponse.self, from: data),
+           let sess = decoded.session, !sess.authToken.isEmpty {
+            self.authToken = sess.authToken
+            if !sess.deviceId.isEmpty {
+                self.deviceId = sess.deviceId
+            }
+            self.isAuthenticated = true
+            return true
+        }
+        return false
+    }
+    
     // MARK: - High-Resolution Demo Profiles with Images
     private func generateMockProfiles(latitude: Double, longitude: Double) -> [Profile] {
         [
