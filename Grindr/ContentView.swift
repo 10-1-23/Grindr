@@ -1,59 +1,83 @@
 //
 //  ContentView.swift
-//  Grindr
-//
-//  Created by Mrdo1o Mac on 7/2/26.
+//  GrindrX - Sovereign Client
+//  Created for Mrdo1o Mac / LSJ Systems Consulting
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @State private var selectedTab: TabItem = .grid
+    
+    enum TabItem: Hashable {
+        case grid
+        case inbox
+        case vault
+        case albums
+        case settings
+    }
+    
+    init() {
+        // Configure dark navigation & tab bars
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color(hex: "070a12"))
+        
+        // Unselected item tint
+        appearance.stackedLayoutAppearance.normal.iconColor = UIColor(Color(hex: "64748b"))
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+            .foregroundColor: UIColor(Color(hex: "64748b")),
+            .font: UIFont.systemFont(ofSize: 10, weight: .semibold)
+        ]
+        
+        // Selected item tint
+        appearance.stackedLayoutAppearance.selected.iconColor = UIColor(Color(hex: "ffd200"))
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: UIColor(Color(hex: "ffd200")),
+            .font: UIFont.systemFont(ofSize: 10, weight: .bold)
+        ]
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        TabView(selection: $selectedTab) {
+            CascadeGridView()
+                .tabItem {
+                    Label("Cascade", systemImage: "square.grid.3x3.fill")
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                .tag(TabItem.grid)
+            
+            InboxView()
+                .tabItem {
+                    Label("Inbox", systemImage: "bubble.left.and.bubble.right.fill")
                 }
-            }
-        } detail: {
-            Text("Select an item")
+                .tag(TabItem.inbox)
+            
+            PhotoVaultView()
+                .tabItem {
+                    Label("Vault", systemImage: "lock.shield.fill")
+                }
+                .tag(TabItem.vault)
+            
+            SharedAlbumsView()
+                .tabItem {
+                    Label("Albums", systemImage: "rectangle.stack.fill")
+                }
+                .tag(TabItem.albums)
+            
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
+                .tag(TabItem.settings)
         }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        .accentColor(Theme.accent)
+        .background(Theme.background.ignoresSafeArea())
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
